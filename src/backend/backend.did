@@ -1,0 +1,41 @@
+type AllPagesRes = variant {
+  AccessDenied : record { user_id : principal };
+  Pages : vec record { text; text };
+};
+type CheckBalanceRes = variant { What };
+type DeletePageArgs = record { path : text };
+type DeletePageRes = variant {
+  AccessDenied : record { path : text; user_id : principal };
+  NotFound : DeletePageArgs;
+  Deleted : DeletePageArgs;
+};
+type FundPageArgs = record { path : text };
+type FundPageRes = variant {
+  Funded : record { spent_amount : float32; pages : vec text };
+  InsufficientFunds;
+};
+type GetPageArgs = record { index : nat64 };
+type GetPageRes = variant {
+  Page : record { content : text; path : text };
+  IndexOutOfBounds : record { max_index : nat64; index : nat64 };
+  FundingRequired : record { path : text; user_id : principal };
+  PathNotFound : FundPageArgs;
+};
+type SetIndexArgs = record { index : vec text };
+type SetIndexRes = variant { IndexSet : vec text; StorageFailure };
+type SetPageArgs = record { content : text; path : text };
+type SetPageRes = variant {
+  Set : FundPageArgs;
+  AccessDenied : record { path : text; user_id : principal };
+};
+service : {
+  all_pages : () -> (AllPagesRes) query;
+  check_balance : () -> (CheckBalanceRes) query;
+  delete_page : (DeletePageArgs) -> (DeletePageRes);
+  fund_page : (FundPageArgs) -> (FundPageRes);
+  funded_pages_list : () -> (vec text) query;
+  get_page : (GetPageArgs) -> (GetPageRes) query;
+  set_index : (SetIndexArgs) -> (SetIndexRes);
+  set_page : (SetPageArgs) -> (SetPageRes);
+  whoami : () -> (principal) query;
+}

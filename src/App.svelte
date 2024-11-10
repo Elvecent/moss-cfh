@@ -1,12 +1,12 @@
 <script lang="ts">
   import { Router, Link, Route } from "svelte-routing";
 
-  import Home from "./routes/Home.svelte";
-  import Member from "./routes/Member.svelte";
+  import About from "./routes/About.svelte";
+  import Posts from "./routes/Posts.svelte";
+  import Me from "./routes/Me.svelte";
 
   export let url:string = "";
-  const about:string = "This is a starter dApp built with Svelte.";
-
+  const about:string = "MOSS";
 
 </script>
 
@@ -14,13 +14,15 @@
 
   <Router {url}>
     <nav>
-      <Link to="/">Home</Link> | 
-      <Link to="/member">Member</Link>
+      <Link to="/">About</Link> | 
+      <Link to="/Posts">Posts</Link> | 
+      <Link to="/Me">Me</Link>
     </nav>
     <div>
       <h2>{ about }</h2>
-      <Route path="/"><Home /></Route>
-      <Route path="/member"><Member /></Route>
+      <Route path="/"><About/></Route>
+      <Route path="/Posts"><Posts/></Route>
+      <Route path="/Me"><Me/></Route>
     </div>
   </Router>
 

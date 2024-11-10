@@ -12,18 +12,15 @@
       }
     },
     "backend": {
-      "main": "src/backend/whoami.mo",
-      "type": "motoko"
+      "candid": "src/backend/backend.did",
+      "package": "moss_backend",
+      "type": "rust"
     },
     "frontend": {
       "source": ["dist/"],
       "type": "assets"
-    },
-    "solidjs": {
-      "source": ["solidjs/vc/dist/"],
-      "type": "assets"
     }
-  },   
+  },
   "defaults": {
     "build": {
       "packtool": ""

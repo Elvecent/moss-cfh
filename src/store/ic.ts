@@ -1,19 +1,10 @@
-// Svelte imports
-// we need a writeable because we update the actor after a successful login
 import { writable } from "svelte/store";
-
-// IC imports
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
-
-// Backend canister import
 import { idlFactory } from "../declarations/backend/backend.did.js";
-
-// type imports
 import type { ActorSubclass, Identity } from "@dfinity/agent";
 import type { _SERVICE } from "../declarations/backend/backend.did.ts";
 
-// custom type definitions
 type OptionsType = {
   agentOptions?: import("@dfinity/agent").HttpAgentOptions;
   actorOptions?: import("@dfinity/agent").ActorConfig;
@@ -25,28 +16,22 @@ type ReturnType = {
   logoutII: () => Promise<boolean>
 };
 
-// Get the identity
 async function getIdentity(): Promise<Identity>{
   try {
     const authClient = await AuthClient.create();
-    //console.log('AuthClient created successfully', authClient);
     const identity = authClient.getIdentity();
     if (!identity) {
       throw new Error('Identity not found');
     }
     return identity;
   } catch (error) {
-    //console.error('Error creating AuthClient or fetching Identity', error);
     throw new Error('Failed to obtain Identity');
   }
 }
 
-// Get the identity - this works but ...
 let identity = getIdentity();
 
-
-// create an actor
-export function createActor(options?:OptionsType):ReturnType {
+export function createActor(options?:OptionsType): ReturnType {
 
   const hostOptions = {
     host:
@@ -55,7 +40,6 @@ export function createActor(options?:OptionsType):ReturnType {
         : `http://${process.env.CANISTER_ID_BACKEND}.localhost:4943`,
   };
   
-  // handle the case where the options are not set
   if (!options) {
     options = { agentOptions: hostOptions };
   } else if (!options.agentOptions) {
@@ -64,14 +48,12 @@ export function createActor(options?:OptionsType):ReturnType {
     options.agentOptions.host = hostOptions.host;
   }
 
-  // in case of a reload, we need to set the identity again
   if(options.agentOptions !== undefined) { 
     options.agentOptions.identity = identity;
   }
   
   const agent = new HttpAgent({ ...options.agentOptions });
   
-  // Fetch root key for certificate validation during development
   if (process.env.DFX_NETWORK !== "ic") {
     agent.fetchRootKey().catch((err) => {
       console.warn(
@@ -81,7 +63,6 @@ export function createActor(options?:OptionsType):ReturnType {
     });
   }
 
-  // Creates an actor with using the candid interface and the HttpAgent
   return Actor.createActor(idlFactory, {
     agent,
     canisterId: process.env.CANISTER_ID_BACKEND,
@@ -89,15 +70,12 @@ export function createActor(options?:OptionsType):ReturnType {
   });
 }
 
-// create a writeable store for an easy access to the actor from the components
 export const ic = writable<ReturnType>({
   actor: createActor() as unknown as ActorSubclass<_SERVICE>,
   loginII: loginII,
   logoutII: logoutII
 });
 
-
-// do then login and check if the user is logged in
 export async function loginII(): Promise<boolean> {
   const authClient = await AuthClient.create();
   let PUBLIC_INTERNET_IDENTITY_CANISTER_ID : string;
@@ -123,19 +101,12 @@ export async function loginII(): Promise<boolean> {
     });
   });
 
-  // if user is authenticated, we can get the identity and update the actor
   if(userIsAuthenticated){
-    // At this point we're authenticated, and we can get the identity from the auth client:
     identity = new Promise<Identity>((resolve, reject) => {
       const identity = authClient.getIdentity();
-      if (identity) {
-        resolve(identity);
-      } else {
-        reject("No identity found");
-      }
+      if (identity) { resolve(identity); } else { reject("No identity found"); }
     });
 
-    // update the actor with the new identity after a successful login
     let options = {agentOptions: {identity: identity}}; 
     ic.update((state) => {
       const newActor = createActor(options) as any; 
@@ -146,12 +117,10 @@ export async function loginII(): Promise<boolean> {
   return userIsAuthenticated;
 };
 
-// do the logout and check if the user is logged out
 export async function logoutII(): Promise <boolean> {
   const authClient = await AuthClient.create();
   authClient.logout();
 
-  // check the status - assuming that the user is logged out
   let userIsAuthenticated = true;
   if(!authClient.isAuthenticated()) {
     userIsAuthenticated = false;
@@ -159,4 +128,3 @@ export async function logoutII(): Promise <boolean> {
 
   return userIsAuthenticated;
 }
-
